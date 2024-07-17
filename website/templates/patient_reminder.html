@@ -1,0 +1,468 @@
+{% extends 'patient_base.html' %}
+{% block title %}Patients Reminders{% endblock %}
+{% block content %}
+<style>
+    .wrapper {
+        width: 100%;
+        margin: 15px auto;
+    }
+
+    /* Calendar container */
+    .container-calendar {
+        background: #ffffff;
+        padding: 15px;
+        width: 100%;
+        margin: 0 auto;
+        overflow: auto;
+        box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 50px;
+    }
+
+    /* Event section styling */
+    #event-section {
+        padding: 10px;
+        background: #f5f5f5;
+        margin: 20px 0;
+        border: 1px solid #ccc;
+    }
+
+    .container-calendar #left h1 {
+        color: #22c55e;
+        text-align: center;
+        background-color: #f2f2f2;
+        margin: 0;
+        padding: 10px 0;
+    }
+
+    #event-section h3 {
+        color: #22c55e;
+        font-size: 18px;
+        margin: 0;
+    }
+
+    #event-section input[type="date"],
+    #event-section input[type="text"] {
+        margin: 10px 0;
+        padding: 5px;
+        width: 80%;
+    }
+
+    #event-section button {
+        background: #22c55e;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        cursor: pointer;
+    }
+
+    .event-marker {
+        position: relative;
+    }
+
+    .event-marker::after {
+        content: '';
+        display: block;
+        width: 6px;
+        height: 6px;
+        background-color: red;
+        border-radius: 50%;
+        position: absolute;
+        bottom: 0;
+        left: 0;
+    }
+
+    /* event tooltip styling */
+    .event-tooltip {
+        position: absolute;
+        background-color: rgba(234, 232, 232, 0.763);
+        color: black;
+        padding: 10px;
+        border-radius: 4px;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: none;
+        transition: all 0.3s;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        z-index: 1;
+    }
+
+    .event-marker:hover .event-tooltip {
+        display: block;
+    }
+
+    /* Reminder section styling */
+    #reminder-section {
+        padding: 10px;
+        background: #f5f5f5;
+        margin: 20px 0;
+        border: 1px solid #ccc;
+    }
+
+    #reminder-section h3 {
+        color: #22c55e;
+        font-size: 18px;
+        margin: 0;
+    }
+
+    #reminderList {
+        list-style: none;
+        padding: 0;
+    }
+
+    #reminderList li {
+        margin: 5px 0;
+        font-size: 16px;
+    }
+
+    /* Style for the delete buttons */
+    .delete-event {
+        background: rgb(237, 19, 19);
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        cursor: pointer;
+        margin-left: 10px;
+        align-items: right;
+    }
+
+    /* Buttons in the calendar */
+    .button-container-calendar button {
+        cursor: pointer;
+        background: #22c55e;
+        color: #fff;
+        border: 1px solid #22c55e;
+        border-radius: 4px;
+        padding: 5px 10px;
+    }
+
+    /* Calendar table */
+    .table-calendar {
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+    .table-calendar td,
+    .table-calendar th {
+        padding: 5px;
+        border: 1px solid #e2e2e2;
+        text-align: center;
+        vertical-align: top;
+    }
+
+    /* Date picker */
+    .date-picker.selected {
+        background-color: #f2f2f2;
+        font-weight: bold;
+        outline: 1px dashed #00BCD4;
+    }
+
+    .date-picker.selected span {
+        border-bottom: 2px solid currentColor;
+    }
+
+    /* Day-specific styling */
+    .date-picker:nth-child(1) {
+        color: red;
+        /* Sunday */
+    }
+
+    .date-picker:nth-child(6) {
+        color: #22c55e;
+        /* Friday */
+    }
+
+    /* Hover effect for date cells */
+    .date-picker:hover {
+        background-color: #22c55e;
+        color: white;
+        cursor: pointer;
+    }
+
+    /* Header for month and year */
+    #monthAndYear {
+        text-align: center;
+        margin-top: 0;
+    }
+
+    /* Navigation buttons */
+    .button-container-calendar {
+        position: relative;
+        margin-bottom: 1em;
+        overflow: hidden;
+        clear: both;
+    }
+
+    #previous {
+        float: left;
+    }
+
+    #next {
+        float: right;
+    }
+
+    /* Footer styling */
+    .footer-container-calendar {
+        margin-top: 1em;
+        border-top: 1px solid #dadada;
+        padding: 10px 0;
+    }
+
+    .footer-container-calendar select {
+        cursor: pointer;
+        background: #ffffff;
+        color: #585858;
+        border: 1px solid #bfc5c5;
+        border-radius: 3px;
+        padding: 5px 1em;
+    }
+</style>
+<div class="wrapper">
+    <div class="container-calendar">
+        <div id="left">
+            <h1>Calendar</h1>
+            <div id="event-section">
+                <h3>Add Event</h3>
+                <input type="date" id="eventDate">
+                <input type="text" id="eventTitle" placeholder="Title">
+                <input type="text" id="eventDescription" placeholder="Description">
+                <button id="addEvent" onclick="addEvent()">
+                    Add
+                </button>
+            </div>
+            <div id="reminder-section">
+                <h3>Reminders</h3>
+                <!-- List to display reminders -->
+                <ul id="reminderList">
+                    <!-- Existing reminders will be added here dynamically -->
+                </ul>
+            </div>
+        </div>
+        <div id="right">
+            <h3 id="monthAndYear"></h3>
+            <div class="button-container-calendar">
+                <button id="previous" onclick="previous()">
+                    ‹
+                </button>
+                <button id="next" onclick="next()">
+                    ›
+                </button>
+            </div>
+            <table class="table-calendar" id="calendar" data-lang="en">
+                <thead id="thead-month"></thead>
+                <!-- Table body for displaying the calendar -->
+                <tbody id="calendar-body"></tbody>
+            </table>
+            <div class="footer-container-calendar">
+                <label for="month">Jump To: </label>
+                <!-- Dropdowns to select a specific month and year -->
+                <select id="month" onchange="jump()">
+                    <option value=0>Jan</option>
+                    <option value=1>Feb</option>
+                    <option value=2>Mar</option>
+                    <option value=3>Apr</option>
+                    <option value=4>May</option>
+                    <option value=5>Jun</option>
+                    <option value=6>Jul</option>
+                    <option value=7>Aug</option>
+                    <option value=8>Sep</option>
+                    <option value=9>Oct</option>
+                    <option value=10>Nov</option>
+                    <option value=11>Dec</option>
+                </select>
+                <!-- Dropdown to select a specific year -->
+                <select id="year" onchange="jump()"></select>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    // script.js
+
+    // Define an array to store events
+    let events = JSON.parse(localStorage.getItem('events')) || [];
+
+    // letiables to store event input fields and reminder list
+    let eventDateInput = document.getElementById("eventDate");
+    let eventTitleInput = document.getElementById("eventTitle");
+    let eventDescriptionInput = document.getElementById("eventDescription");
+    let reminderList = document.getElementById("reminderList");
+
+    // Counter to generate unique event IDs
+    let eventIdCounter = events.length ? Math.max(...events.map(event => event.id)) + 1 : 1;
+
+    // Function to save events to localStorage
+    function saveEventsToLocalStorage() {
+        localStorage.setItem('events', JSON.stringify(events));
+    }
+
+    // Function to add events
+    function addEvent() {
+        let date = eventDateInput.value;
+        let title = eventTitleInput.value;
+        let description = eventDescriptionInput.value;
+
+        if (date && title) {
+            // Create a unique event ID
+            let eventId = eventIdCounter++;
+
+            events.push({
+                id: eventId,
+                date: date,
+                title: title,
+                description: description
+            });
+
+            // Save events to localStorage
+            saveEventsToLocalStorage();
+
+            renderEvents();
+            renderReminders();
+
+            // Reset input fields
+            eventDateInput.value = "";
+            eventTitleInput.value = "";
+            eventDescriptionInput.value = "";
+        } else {
+            alert("Please fill out all the fields.");
+        }
+    }
+
+    // Function to delete events
+    function deleteEvent(eventId) {
+        events = events.filter(event => event.id !== eventId);
+        
+        // Save updated events to localStorage
+        saveEventsToLocalStorage();
+        
+        renderEvents();
+        renderReminders();
+    }
+
+    // Function to render events
+    function renderEvents() {
+        let calendarDays = document.querySelectorAll(".date-picker");
+        calendarDays.forEach(day => {
+            day.classList.remove("event-marker");
+            day.innerHTML = day.getAttribute("data-date").split("-")[2];
+            let eventDate = day.getAttribute("data-date");
+
+            events.forEach(event => {
+                if (event.date === eventDate) {
+                    day.classList.add("event-marker");
+                    day.innerHTML += `<span class="event-tooltip">${event.title}: ${event.description}</span>`;
+                }
+            });
+        });
+    }
+
+    // Function to render reminders
+    function renderReminders() {
+        reminderList.innerHTML = ""; // Clear existing reminders
+
+        events.forEach(event => {
+            let listItem = document.createElement("li");
+            listItem.textContent = `${event.date}: ${event.title} - ${event.description}`;
+            
+            // Create delete button for each reminder
+            let deleteButton = document.createElement("button");
+            deleteButton.classList.add("delete-event");
+            deleteButton.textContent = "Delete";
+            deleteButton.onclick = function() {
+                deleteEvent(event.id);
+            };
+
+            listItem.appendChild(deleteButton);
+            reminderList.appendChild(listItem);
+        });
+    }
+
+    // Calendar initialization code
+    let currentYear = new Date().getFullYear();
+    let currentMonth = new Date().getMonth();
+    let currentDate = new Date().getDate();
+    let months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    let monthAndYear = document.getElementById("monthAndYear");
+    showCalendar(currentMonth, currentYear);
+
+    // Function to show the calendar
+    function showCalendar(month, year) {
+        let firstDay = (new Date(year, month)).getDay();
+        let daysInMonth = 32 - new Date(year, month, 32).getDate();
+        let tbl = document.getElementById("calendar-body");
+        tbl.innerHTML = "";
+
+        // Clear the calendar body
+        let date = 1;
+        for (let i = 0; i < 6; i++) {
+            let row = document.createElement("tr");
+            for (let j = 0; j < 7; j++) {
+                if (i === 0 && j < firstDay) {
+                    let cell = document.createElement("td");
+                    let cellText = document.createTextNode("");
+                    cell.appendChild(cellText);
+                    row.appendChild(cell);
+                } else if (date > daysInMonth) {
+                    break;
+                } else {
+                    let cell = document.createElement("td");
+                    cell.classList.add("date-picker");
+                    cell.setAttribute("data-date", `${year}-${String(month + 1).padStart(2, "0")}-${String(date).padStart(2, "0")}`);
+                    cell.innerHTML = `<span>${date}</span>`;
+                    if (date === currentDate && year === currentYear && month === currentMonth) {
+                        cell.classList.add("selected");
+                    }
+                    row.appendChild(cell);
+                    date++;
+                }
+            }
+            tbl.appendChild(row);
+        }
+
+        monthAndYear.textContent = `${months[month]} ${year}`;
+        renderEvents();
+    }
+
+    // Function to navigate to the previous month
+    function previous() {
+        currentYear = (currentMonth === 0) ? currentYear - 1 : currentYear;
+        currentMonth = (currentMonth === 0) ? 11 : currentMonth - 1;
+        showCalendar(currentMonth, currentYear);
+    }
+
+    // Function to navigate to the next month
+    function next() {
+        currentYear = (currentMonth === 11) ? currentYear + 1 : currentYear;
+        currentMonth = (currentMonth === 11) ? 0 : currentMonth + 1;
+        showCalendar(currentMonth, currentYear);
+    }
+
+    // Function to jump to a specific month and year
+    function jump() {
+        currentYear = parseInt(document.getElementById("year").value);
+        currentMonth = parseInt(document.getElementById("month").value);
+        showCalendar(currentMonth, currentYear);
+    }
+
+    // Populate the year dropdown with a range of years
+    let yearSelect = document.getElementById("year");
+    let currentYearOption = new Date().getFullYear();
+    for (let i = currentYearOption - 50; i <= currentYearOption + 50; i++) {
+        let option = document.createElement("option");
+        option.value = i;
+        option.textContent = i;
+        if (i === currentYearOption) {
+            option.selected = true;
+        }
+        yearSelect.appendChild(option);
+    }
+
+    // Set the current month in the month dropdown
+    document.getElementById("month").value = currentMonth;
+
+    // Initial render of reminders
+    renderReminders();
+</script>
+{% endblock %}

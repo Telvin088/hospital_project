@@ -1,0 +1,106 @@
+{% extends 'patient_base.html' %}
+{% block title %}Patient Dashboard{% endblock %}
+{% block content %}
+<style>
+    .appointments-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
+
+    .appointments-table th,
+    .appointments-table td {
+        padding: 10px;
+    }
+
+    .appointments-table th {
+        padding-top: 12px;
+        padding-bottom: 12px;
+        text-align: left;
+        color: #333;
+        border-bottom: 1px solid #f2f2f2;
+    }
+
+    .appointments-table tr:nth-child(even) {
+        background-color: #fff;
+    }
+</style>
+<!-- <div class="bg-card text-card-foreground p-4 rounded shadow mb-6" style="width: 600px;">
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-bold">ROOMS</h2>
+        <a href="#" class="text-primary">View All</a>
+    </div>
+</div> -->
+
+
+<div class="bg-card text-card-foreground p-4 rounded shadow mb-6">
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-bold">DOCTORS</h2>
+        <a href="#" class="text-primary">View All</a>
+    </div>
+    <table class="appointments-table" style="font-size: 13px;">
+        <thead>
+            <tr>
+                <th></th>
+                <th>ID</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Field</th>
+                <th>Gender</th>
+                <th>Phone Number</th>
+                <th>Created At</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for doctor in doctors %}
+            <tr>
+                <td><span style="font-size: 18px;" class="material-symbols-outlined">
+                        check_box_outline_blank
+                    </span></td>
+                <td>{{ doctor['session_id'] }}</td>
+                <td>{{ doctor['username'] }}</td>
+                <td>{{ doctor['email'] }}</td>
+                <td>{{ doctor['field'] }}</td>
+                <td>{{ doctor['gender'] }}</td>
+                <td>{{ doctor['phone_number'] }}</td>
+                <td>{{ doctor['created_at'] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+<div class="flex flex-col items-center justify-center" style="width: 100%; height: 470px;">
+    <div class="bg-card w-full flex">
+        <div class="pr-4 shadow rounded-md p-4" style="width: 30%;">
+            <form action="/feedback" method="post" class="flex flex-col space-y-4">
+                <input type="text" name="username" placeholder="Username" value="{{ user.username }}"
+                    class="input-field rounded" readonly />
+                <input type="email" name="email" placeholder="Email Address" value="{{ user.email }}"
+                    class="input-field rounded" />
+                <input type="tel" name="phone" placeholder="Phone Number" value="{{ user.phone }}"
+                    class="input-field rounded" />
+                <input type="date" name="date" class="input-field rounded" />
+                <textarea placeholder="Message" rows="4" name="message" class="input-field rounded"></textarea>
+                <button type="submit"
+                    class="bg-primary text-primary-foreground py-2 rounded-md hover:bg-primary/80">Submit</button>
+            </form>
+        </div>
+        <div class="px-4 shadow rounded ml-4 p-4" style="width: 70%;">
+            <h2 class="text-lg font-bold text-dark-foreground mb-4" style="font-size: 25px; margin-top: -5px;">My
+                Feedback
+            </h2>
+            <div class="container">
+                {% for feedback in feedbacks %}
+                <div class="feedback-card border-b mt-3">
+                    <div style="font-size: 13px;" class="my-2">
+                        <p class="mb-3">{{ feedback.message | truncate_words(30) }}</p>
+                        <p style="font-style: italic; font-size: 10px; color: #62c55e; margin-left: 625px;"
+                            class="mt-1">{{ feedback.date }}</small></p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
